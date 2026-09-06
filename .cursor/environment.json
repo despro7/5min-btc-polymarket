@@ -1,0 +1,5 @@
+{
+  "name": "5min BTC Polymarket Skill",
+  "user": "ubuntu",
+  "install": "bash scripts/setup_env.sh"
+}

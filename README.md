@@ -36,6 +36,17 @@ git clone https://github.com/Novals83/5min-btc-polymarket.git
 cd 5min-btc-polymarket
 ```
 
+Set up the local Python environment (creates `.venv` and installs dependencies):
+```bash
+bash scripts/setup_env.sh
+```
+
+This installs the packages listed in `requirements.txt` (`requests`,
+`py-clob-client`, `PyYAML`). Market-data resolution, CLOB order-book access,
+strategy logic, and reporting run locally; live order placement additionally
+requires the external execution repo (`pm-hl-conservative-plus-repo`) and API
+credentials, as described below.
+
 Read:
 - `SKILL.md`
 - `config/btc_5m_profiles.yaml`
