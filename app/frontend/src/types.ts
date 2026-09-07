@@ -15,6 +15,7 @@ export interface SimConfig {
   stop_loss_pct: number;
   exit_before_sec: number;
   min_entry_seconds_left: number;
+  max_entry_seconds_left: number;
   poll_sec: number;
   start_balance: number;
   max_trades_per_session: number;

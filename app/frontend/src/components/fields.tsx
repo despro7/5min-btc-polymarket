@@ -35,25 +35,15 @@ export function NumField(props: {
   const atMin = minValue !== undefined && value <= minValue;
   const atMax = maxValue !== undefined && value >= maxValue;
 
-  const btn =
-    "flex items-center justify-center w-9 self-stretch text-[var(--foreground)] transition-colors hover:bg-[var(--color-default-200)] disabled:opacity-40 disabled:cursor-not-allowed";
+  const circle =
+    "shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-[var(--surface)] text-[var(--foreground)] transition-colors hover:bg-[var(--accent)] hover:text-[var(--accent-foreground)] active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-[var(--surface)] disabled:hover:text-[var(--foreground)]";
 
   return (
     <div className="w-full">
-      <label className="block text-xs text-[var(--muted-foreground)] mb-1.5">{label}</label>
-      <div
-        className={`flex items-stretch h-9 rounded-lg border border-[var(--color-default-300)] bg-[var(--color-default-100)] overflow-hidden focus-within:border-[var(--color-accent)] ${
-          isDisabled ? "opacity-50" : ""
-        }`}
-      >
-        <button
-          type="button"
-          aria-label="Decrease"
-          disabled={isDisabled || atMin}
-          onClick={() => commit(value - step)}
-          className={`${btn} border-r border-[var(--color-default-300)]`}
-        >
-          <DynamicIcon name="minus" size={15} strokeWidth={2} className="shrink-0" />
+      <label className="block text-xs text-[var(--muted)] mb-1.5 truncate">{label}</label>
+      <div className={`flex items-center gap-1 rounded-full bg-[var(--surface-tertiary)] p-1 ${isDisabled ? "opacity-50" : ""}`}>
+        <button type="button" aria-label="Decrease" disabled={isDisabled || atMin} onClick={() => commit(value - step)} className={circle}>
+          <DynamicIcon name="minus" size={14} strokeWidth={2.25} className="shrink-0" />
         </button>
         <input
           type="text"
@@ -66,16 +56,10 @@ export function NumField(props: {
             if (!isNaN(v)) commit(v);
           }}
           onBlur={() => setText(String(value))}
-          className="w-full min-w-0 bg-transparent text-center text-sm font-medium tabular-nums outline-none"
+          className="w-full min-w-0 bg-transparent text-center text-sm font-semibold tabular-nums outline-none"
         />
-        <button
-          type="button"
-          aria-label="Increase"
-          disabled={isDisabled || atMax}
-          onClick={() => commit(value + step)}
-          className={`${btn} border-l border-[var(--color-default-300)]`}
-        >
-          <DynamicIcon name="plus" size={15} strokeWidth={2} className="shrink-0" />
+        <button type="button" aria-label="Increase" disabled={isDisabled || atMax} onClick={() => commit(value + step)} className={circle}>
+          <DynamicIcon name="plus" size={14} strokeWidth={2.25} className="shrink-0" />
         </button>
       </div>
     </div>
@@ -92,13 +76,13 @@ export function LabeledSwitch(props: {
   const { label, description, isSelected, onChange, isDisabled } = props;
   return (
     <Switch isSelected={isSelected} onChange={onChange} isDisabled={isDisabled}>
-      <Switch.Control>
-        <Switch.Thumb />
-      </Switch.Control>
       <Switch.Content>
+        <Switch.Control>
+          <Switch.Thumb />
+        </Switch.Control>
         <Label>{label}</Label>
-        {description ? <Description>{description}</Description> : null}
       </Switch.Content>
+      {description ? <Description>{description}</Description> : null}
     </Switch>
   );
 }

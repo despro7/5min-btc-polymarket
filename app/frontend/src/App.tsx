@@ -9,19 +9,20 @@ import { KpiCards } from "./components/KpiCards";
 import { PortfolioChart } from "./components/PortfolioChart";
 import { PositionCard } from "./components/PositionCard";
 import { EventFeed } from "./components/EventFeed";
-import { TradesTable } from "./components/TradesTable";
+import { TradesTable, PeriodFilter, type Period } from "./components/TradesTable";
 import { SettingsPanel } from "./components/SettingsPanel";
 
 const EMPTY_MARKET: MarketSnapshot = {
   slug: null, seconds_left: null, up_ask: null, dn_ask: null, up_bid: null, dn_bid: null, spread: null,
 };
 
-function SectionHeading({ icon, title, children }: { icon: IconName; title: string; children?: ReactNode }) {
+function SectionHeading({ icon, title, children, action }: { icon: IconName; title: string; children?: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex items-center gap-2 mb-2 px-1">
       <DynamicIcon name={icon} size={17} strokeWidth={1.75} className="shrink-0" />
       <h2 className="text-base font-semibold">{title}</h2>
       {children}
+      {action ? <div className="ml-auto">{action}</div> : null}
     </div>
   );
 }
@@ -31,6 +32,7 @@ export default function App() {
   const [config, setConfig] = useState<SimConfig | null>(null);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [preview, setPreview] = useState<MarketSnapshot>(EMPTY_MARKET);
+  const [tradePeriod, setTradePeriod] = useState<Period>("all");
 
   useEffect(() => {
     api.defaults().then(setConfig).catch(() => {});
@@ -85,12 +87,12 @@ export default function App() {
       <header className="flex items-center gap-3 mb-5">
         <DynamicIcon name="candlestick-chart" size={26} strokeWidth={1.75} className="shrink-0 text-accent" />
         <h1 className="text-xl md:text-2xl font-bold">BTC 5m Paper Simulator</h1>
-        <Chip color="warning">
+        <Chip color="warning" className="px-2.5 gap-1">
           <DynamicIcon name="flask-conical" size={14} strokeWidth={1.75} className="shrink-0" />
           PAPER MODE
         </Chip>
         <div className="ml-auto">
-          <Chip color={connected ? "success" : "danger"} size="sm">
+          <Chip color={connected ? "success" : "danger"} size="sm" className="px-2 gap-1">
             <DynamicIcon name={connected ? "wifi" : "wifi-off"} size={14} strokeWidth={1.75} className="shrink-0" />
             {connected ? "connected" : "reconnecting…"}
           </Chip>
@@ -103,6 +105,9 @@ export default function App() {
 
         <div className="flex flex-col lg:flex-row gap-4 items-start">
           <aside className="w-full lg:w-[360px] lg:shrink-0">
+            <SectionHeading icon="sliders-horizontal" title="Settings">
+              <span className="text-xs text-[var(--muted)]">— paper mode</span>
+            </SectionHeading>
             {config ? (
               <SettingsPanel
                 config={config}
@@ -115,18 +120,21 @@ export default function App() {
                 onDeletePreset={onDeletePreset}
               />
             ) : (
-              <div className="text-[var(--muted-foreground)]">Loading settings…</div>
+              <div className="text-[var(--muted)]">Loading settings…</div>
             )}
           </aside>
 
           <main className="flex-1 min-w-0 space-y-5">
-            <PortfolioChart data={equity} startBalance={startBalance} />
+            <section>
+              <SectionHeading icon="line-chart" title="Portfolio" />
+              <PortfolioChart data={equity} />
+            </section>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               <section className="lg:col-span-1">
                 <SectionHeading icon="briefcase" title="Position">
                   {pos ? (
-                    <Chip size="sm" color={pos.side === "UP" ? "success" : "danger"}>
+                    <Chip size="sm" color={pos.side === "UP" ? "success" : "danger"} className="px-2 gap-1">
                       <DynamicIcon name={pos.side === "UP" ? "trending-up" : "trending-down"} size={13} strokeWidth={1.75} className="shrink-0" />
                       {pos.side}
                     </Chip>
@@ -154,15 +162,19 @@ export default function App() {
             </div>
 
             <section>
-              <SectionHeading icon="history" title="Trade history">
+              <SectionHeading
+                icon="history"
+                title="Trade history"
+                action={<PeriodFilter period={tradePeriod} setPeriod={setTradePeriod} />}
+              >
                 <Chip size="sm" color="default">{trades.length}</Chip>
               </SectionHeading>
-              <TradesTable trades={trades} />
+              <TradesTable trades={trades} period={tradePeriod} />
             </section>
           </main>
         </div>
 
-        <footer className="text-center text-xs text-[var(--muted-foreground)] py-4">
+        <footer className="text-center text-xs text-[var(--muted)] py-4">
           Educational paper-trading simulator. No real orders, wallets, or funds are involved.
         </footer>
       </div>

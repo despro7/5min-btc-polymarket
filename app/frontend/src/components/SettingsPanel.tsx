@@ -6,7 +6,7 @@ import { LabeledSwitch, NumField } from "./fields";
 
 function SectionLabel({ icon, text }: { icon: IconName; text: string }) {
   return (
-    <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--muted-foreground)] mb-2 uppercase tracking-wide">
+    <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--muted)] mb-2 uppercase tracking-wide">
       <DynamicIcon name={icon} size={14} strokeWidth={1.75} className="shrink-0" />
       {text}
     </div>
@@ -45,16 +45,9 @@ export function SettingsPanel(props: {
 
   return (
     <Card className="h-full">
-      <Card.Header>
-        <Card.Title className="flex items-center gap-2">
-          <DynamicIcon name="sliders-horizontal" size={16} strokeWidth={1.75} className="shrink-0" />
-          Settings
-        </Card.Title>
-        <Card.Description>Paper mode — no real orders or funds</Card.Description>
-      </Card.Header>
-      <Card.Content className="space-y-5">
+      <Card.Content className="space-y-5 pt-5">
         <div>
-          <div className="text-xs text-[var(--muted-foreground)] mb-2">Profile</div>
+          <div className="text-xs text-[var(--muted)] mb-2">Profile</div>
           <div className="flex gap-2">
             {(["conservative", "aggressive", "custom"] as const).map((p) => (
               <Button
@@ -77,7 +70,11 @@ export function SettingsPanel(props: {
           <NumField label="Start balance" value={config.start_balance} onChange={(v) => set({ start_balance: v })} minValue={1} step={10} isDisabled={running} />
           <NumField label="Exit before (sec)" value={config.exit_before_sec} onChange={(v) => set({ exit_before_sec: v })} minValue={0} step={5} isDisabled={running} />
           <NumField label="Min entry sec left" value={config.min_entry_seconds_left} onChange={(v) => set({ min_entry_seconds_left: v })} minValue={0} step={5} isDisabled={running} />
+          <NumField label="Max entry sec (0=off)" value={config.max_entry_seconds_left} onChange={(v) => set({ max_entry_seconds_left: v })} minValue={0} step={5} isDisabled={running} />
           <NumField label="Poll (sec)" value={config.poll_sec} onChange={(v) => set({ poll_sec: v })} minValue={1} step={1} isDisabled={running} />
+        </div>
+        <div className="text-xs text-[var(--muted)] -mt-2">
+          Entry window: only enter when <span className="text-[var(--foreground)]">Min ≤ seconds-left ≤ Max</span> (set Max &gt; 0 to skip entries that are too early).
         </div>
 
         <div>
@@ -91,7 +88,7 @@ export function SettingsPanel(props: {
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-[var(--muted-foreground)] uppercase tracking-wide">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-[var(--muted)] uppercase tracking-wide">
               <DynamicIcon name="gauge" size={14} strokeWidth={1.75} className="shrink-0" />
               Execution realism
             </span>
@@ -109,19 +106,17 @@ export function SettingsPanel(props: {
               <NumField label="Latency max (ms)" value={r.latency_max_ms} onChange={(v) => setRealism({ latency_max_ms: v })} minValue={0} step={100} isDisabled={running || !r.enabled} />
               <NumField label="Taker fee rate" value={r.fee_rate} onChange={(v) => setRealism({ fee_rate: v })} minValue={0} maxValue={1} step={0.01} isDisabled={running} />
             </div>
-            <div className="text-xs text-[var(--muted-foreground)]">Polymarket crypto taker fee = shares × rate × p × (1−p). Default rate 0.07.</div>
+            <div className="text-xs text-[var(--muted)]">Polymarket crypto taker fee = shares × rate × p × (1−p). Default rate 0.07.</div>
           </div>
         </div>
 
         <div className="flex gap-2 pt-1">
           {running ? (
-            <Button variant="danger" onPress={onStop} className="flex-1">
-              <DynamicIcon name="square" size={16} strokeWidth={1.75} className="shrink-0" />
+            <Button variant="danger" size="lg" onPress={onStop} className="flex-1">
               Stop session
             </Button>
           ) : (
-            <Button variant="primary" onPress={onStart} className="flex-1">
-              <DynamicIcon name="play" size={16} strokeWidth={1.75} className="shrink-0" />
+            <Button variant="primary" size="lg" onPress={onStart} className="flex-1">
               Start paper session
             </Button>
           )}
@@ -131,7 +126,7 @@ export function SettingsPanel(props: {
           <SectionLabel icon="bookmark" text="Presets" />
           <div className="flex gap-2 mb-2">
             <input
-              className="flex-1 rounded-md bg-[var(--color-default-100)] border border-[var(--color-default-200)] px-2 py-1 text-sm"
+              className="flex-1 rounded-md bg-[var(--field-background)] border border-[var(--field-border)] px-2 py-1 text-sm outline-none focus:border-[var(--field-border-focus)]"
               placeholder="Preset name"
               value={presetName}
               onChange={(e) => setPresetName(e.target.value)}
@@ -150,7 +145,7 @@ export function SettingsPanel(props: {
                 </Button>
               </div>
             ))}
-            {presets.length === 0 ? <span className="text-xs text-[var(--muted-foreground)]">No saved presets.</span> : null}
+            {presets.length === 0 ? <span className="text-xs text-[var(--muted)]">No saved presets.</span> : null}
           </div>
         </div>
       </Card.Content>
