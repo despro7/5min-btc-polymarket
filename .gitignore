@@ -2,3 +2,10 @@ __pycache__/
 *.pyc
 .env
 .env.*
+.venv/
+runtime/
+
+# app runtime
+app/backend/data/
+app/frontend/node_modules/
+app/frontend/dist/

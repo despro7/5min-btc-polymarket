@@ -1,0 +1,7 @@
+# Runtime dependencies for the 5min BTC Polymarket skill scripts.
+# Order placement itself is delegated to the external execution repo
+# (pm-hl-conservative-plus-repo); these deps cover market-data resolution,
+# CLOB order-book access, strategy logic, and reporting utilities.
+requests==2.34.2
+py-clob-client==0.34.6
+PyYAML==6.0.3
