@@ -1,0 +1,5 @@
+# Paper-trading simulator backend (read-only Polymarket access; no py-clob-client).
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+requests==2.34.2
+pydantic==2.13.5
