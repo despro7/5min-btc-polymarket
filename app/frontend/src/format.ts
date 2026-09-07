@@ -18,8 +18,8 @@ export const fmtClock = (ms: number): string => {
 export const fmtDateTime = (iso: string): string => {
   const dt = new Date(iso);
   if (isNaN(dt.getTime())) return "—";
-  const date = dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  const time = dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  const date = dt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  const time = dt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false });
   return `${date} · ${time}`;
 };
 
@@ -28,9 +28,9 @@ export const fmtSecs = (s: number | null | undefined): string =>
 
 export const pnlClass = (n: number | null | undefined): string =>
   n === null || n === undefined
-    ? "text-[var(--muted-foreground)]"
+    ? "text-[var(--muted)]"
     : n > 0
     ? "text-success"
     : n < 0
     ? "text-danger"
-    : "text-[var(--muted-foreground)]";
+    : "text-[var(--muted)]";

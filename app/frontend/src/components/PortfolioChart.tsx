@@ -1,108 +1,117 @@
 import { useMemo, useState } from "react";
 import { Button, Card } from "@heroui/react";
+import { DynamicIcon } from "lucide-react/dynamic";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { EquityPoint } from "../types";
-import { fmtClock, fmtSigned, fmtUsd } from "../format";
+import { fmtClock, fmtSigned } from "../format";
 
-type Series = "equity" | "pnl" | "rate";
+type Range = "1d" | "1w" | "1m" | "1y" | "ytd" | "all";
 
-const SERIES: { key: Series; label: string }[] = [
-  { key: "equity", label: "Equity" },
-  { key: "pnl", label: "P&L" },
-  { key: "rate", label: "Rate" },
+const RANGES: { key: Range; label: string; subtitle: string }[] = [
+  { key: "1d", label: "1D", subtitle: "Past day" },
+  { key: "1w", label: "1W", subtitle: "Past week" },
+  { key: "1m", label: "1M", subtitle: "Past month" },
+  { key: "1y", label: "1Y", subtitle: "Past year" },
+  { key: "ytd", label: "YTD", subtitle: "Year to date" },
+  { key: "all", label: "ALL", subtitle: "All time" },
 ];
 
-export function PortfolioChart({ data, startBalance }: { data: EquityPoint[]; startBalance: number }) {
-  const [series, setSeries] = useState<Series>("equity");
+function cutoff(range: Range): number {
+  const now = Date.now();
+  switch (range) {
+    case "1d": return now - 24 * 3600e3;
+    case "1w": return now - 7 * 24 * 3600e3;
+    case "1m": return now - 30 * 24 * 3600e3;
+    case "1y": return now - 365 * 24 * 3600e3;
+    case "ytd": return new Date(new Date().getFullYear(), 0, 1).getTime();
+    case "all": return -Infinity;
+  }
+}
 
-  const chartData = useMemo(
-    () =>
-      data.map((p) => ({
-        ...p,
-        label: fmtClock(p.t),
-        rate: startBalance ? (p.equity / startBalance - 1) * 100 : 0,
-      })),
-    [data, startBalance]
-  );
+export function PortfolioChart({ data }: { data: EquityPoint[] }) {
+  const [range, setRange] = useState<Range>("1d");
+
+  const chartData = useMemo(() => {
+    const c = cutoff(range);
+    return data
+      .filter((p) => p.t >= c)
+      .map((p) => ({ ...p, label: fmtClock(p.t) }));
+  }, [data, range]);
 
   const last = chartData[chartData.length - 1];
-  const lastVal = last ? (last[series] as number) : null;
+  const lastVal = last ? last.pnl : null;
   const positive = (lastVal ?? 0) >= 0;
+  const rangeMeta = RANGES.find((r) => r.key === range)!;
 
-  const color =
-    series === "equity"
-      ? "var(--color-accent)"
-      : positive
-      ? "var(--color-success)"
-      : "var(--color-danger)";
+  const startColor = positive ? "#a855f7" : "#f43f5e";
+  const endColor = positive ? "#38bdf8" : "#fb7185";
 
-  const fmt = (v: number) =>
-    series === "equity" ? fmtUsd(v) : series === "pnl" ? fmtSigned(v) : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
-
-  const currentText =
-    lastVal === null ? "—" : series === "equity" ? fmtUsd(lastVal) : fmt(lastVal);
+  const valueText = lastVal === null ? "—" : `${lastVal >= 0 ? "+" : "-"}$${Math.abs(lastVal).toFixed(2)}`;
+  const valueColor = positive ? "var(--color-success)" : "var(--color-danger)";
 
   return (
     <Card>
-      <Card.Content className="pt-4">
+      <Card.Content className="pt-3">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <div className="text-sm font-semibold">Portfolio</div>
-            <div className="text-xs text-[var(--muted-foreground)] mt-1">
-              {series === "equity" ? "Equity value" : series === "pnl" ? "Realized P&L" : "Return vs start"}
+            <div className="flex items-center gap-1.5" style={{ color: valueColor }}>
+              <DynamicIcon name={positive ? "trending-up" : "trending-down"} size={16} strokeWidth={2.25} className="shrink-0" />
+              <span className="text-sm font-semibold">Profit/Loss</span>
             </div>
-            <div className="text-2xl font-bold tabular-nums mt-0.5" style={{ color: series === "equity" ? undefined : color }}>
-              {currentText}
+            <div className="text-4xl font-bold tabular-nums mt-1" style={{ color: valueColor }}>
+              {valueText}
             </div>
+            <div className="text-xs text-[var(--muted)] mt-1">{rangeMeta.subtitle}</div>
           </div>
-          <div className="flex gap-1 rounded-lg border border-[var(--color-default-200)] p-1 bg-[var(--color-default-100)]">
-            {SERIES.map((s) => (
+          <div className="flex gap-1 rounded-lg p-1 bg-[var(--surface-secondary)]">
+            {RANGES.map((r) => (
               <Button
-                key={s.key}
+                key={r.key}
                 size="sm"
-                variant={series === s.key ? "primary" : "ghost"}
-                onPress={() => setSeries(s.key)}
+                variant={range === r.key ? "primary" : "ghost"}
+                onPress={() => setRange(r.key)}
               >
-                {s.label}
+                {r.label}
               </Button>
             ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mt-2 mb-1">
-          <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ background: color }} />
-          <span className="text-xs text-[var(--muted-foreground)]">{SERIES.find((s) => s.key === series)?.label}</span>
-        </div>
-
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer width="100%" height={260} className="mt-3">
           <AreaChart data={chartData} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
             <defs>
-              <linearGradient id="portfolioFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={color} stopOpacity={0.35} />
-                <stop offset="100%" stopColor={color} stopOpacity={0} />
+              <linearGradient id="pnlStroke" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor={startColor} />
+                <stop offset="100%" stopColor={endColor} />
+              </linearGradient>
+              <linearGradient id="pnlFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={endColor} stopOpacity={0.3} />
+                <stop offset="100%" stopColor={endColor} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-default-200)" opacity={0.3} vertical={false} />
-            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--color-default-500)" }} minTickGap={44} tickLine={false} axisLine={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--separator)" opacity={0.6} vertical={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--foreground)" }} minTickGap={44} tickLine={false} axisLine={false} />
             <YAxis
               domain={["auto", "auto"]}
-              tick={{ fontSize: 11, fill: "var(--color-default-500)" }}
+              tick={{ fontSize: 11, fill: "var(--foreground)" }}
               width={56}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(v) => (series === "equity" ? `$${Number(v).toFixed(0)}` : series === "rate" ? `${Number(v).toFixed(0)}%` : Number(v).toFixed(1))}
+              tickFormatter={(v) => fmtSigned(Number(v), 0)}
             />
             <Tooltip
               contentStyle={{
-                background: "var(--color-default-50)",
-                border: "1px solid var(--color-default-200)",
+                background: "var(--surface-tertiary)",
+                border: "1px solid var(--border)",
                 borderRadius: 8,
                 fontSize: 12,
+                color: "var(--foreground)",
               }}
-              labelStyle={{ color: "var(--color-default-500)" }}
-              formatter={(v) => [fmt(Number(v)), SERIES.find((s) => s.key === series)?.label ?? ""]}
+              labelStyle={{ color: "var(--foreground)" }}
+              itemStyle={{ color: "var(--foreground)" }}
+              formatter={(v) => [fmtSigned(Number(v)), "P&L"]}
             />
-            <Area type="monotone" dataKey={series} stroke={color} strokeWidth={2} fill="url(#portfolioFill)" isAnimationActive={false} />
+            <Area type="monotone" dataKey="pnl" stroke="url(#pnlStroke)" strokeWidth={2.5} fill="url(#pnlFill)" isAnimationActive={false} />
           </AreaChart>
         </ResponsiveContainer>
       </Card.Content>

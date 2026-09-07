@@ -6,7 +6,7 @@ import { fmtNum, fmtSecs } from "../format";
 function Cell({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) {
   return (
     <div className="flex flex-col">
-      <span className="text-[11px] uppercase tracking-wide text-[var(--muted-foreground)]">{label}</span>
+      <span className="text-[11px] uppercase tracking-wide text-[var(--muted)]">{label}</span>
       <span className={`text-base font-semibold tabular-nums ${valueClass ?? ""}`}>{value}</span>
     </div>
   );
@@ -34,11 +34,11 @@ export function StatusBar({
           <Cell label="UP bid" value={fmtNum(market.up_bid, 3)} />
           <Cell label="DOWN bid" value={fmtNum(market.dn_bid, 3)} />
           <div className="ml-auto flex items-center gap-2">
-            <Chip color={state === "IN_POSITION" ? "accent" : "default"}>
+            <Chip color={state === "IN_POSITION" ? "accent" : "default"} className="px-2.5 gap-1">
               <DynamicIcon name={state === "IN_POSITION" ? "briefcase" : "circle-dashed"} size={14} strokeWidth={1.75} className="shrink-0" />
               {state}
             </Chip>
-            <Chip color={running ? "success" : "default"}>
+            <Chip color={running ? "success" : "default"} className="px-2.5 gap-1">
               <DynamicIcon name={running ? "activity" : "pause"} size={14} strokeWidth={1.75} className="shrink-0" />
               {running ? "RUNNING" : "IDLE"}
             </Chip>

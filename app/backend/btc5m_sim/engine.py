@@ -177,6 +177,9 @@ class SimEngine:
 
         if sec_left < cfg.min_entry_seconds_left:
             return events
+        # Entry-window upper bound: skip entries that are too early in the slot.
+        if cfg.max_entry_seconds_left and sec_left > cfg.max_entry_seconds_left:
+            return events
 
         candidates = []
         if up_ask is not None and up_ask >= cfg.threshold:

@@ -5,13 +5,13 @@ import { fmtNum, fmtPct, fmtSigned, fmtUsd, pnlClass } from "../format";
 
 function Stat({ icon, label, value, valueClass }: { icon: IconName; label: string; value: string; valueClass?: string }) {
   return (
-    <Card className="flex-1 min-w-[130px]">
-      <Card.Content className="py-3">
-        <div className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
+    <Card className="flex-1 min-w-[150px]">
+      <Card.Content className="py-4">
+        <div className="flex items-center gap-1.5 text-xs text-[var(--muted)]">
           <DynamicIcon name={icon} size={14} strokeWidth={1.75} className="shrink-0" />
           {label}
         </div>
-        <div className={`text-xl font-semibold tabular-nums ${valueClass ?? ""}`}>{value}</div>
+        <div className={`text-3xl font-bold tabular-nums mt-1 ${valueClass ?? ""}`}>{value}</div>
       </Card.Content>
     </Card>
   );
