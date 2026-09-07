@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Chip } from "@heroui/react";
-import { DynamicIcon } from "lucide-react/dynamic";
+import { DynamicIcon, type IconName } from "lucide-react/dynamic";
 import { api } from "./api";
 import { useSim } from "./useSim";
 import type { MarketSnapshot, Preset, SimConfig, Trade } from "./types";
 import { StatusBar } from "./components/StatusBar";
 import { KpiCards } from "./components/KpiCards";
-import { EquityChart } from "./components/EquityChart";
+import { PortfolioChart } from "./components/PortfolioChart";
 import { PositionCard } from "./components/PositionCard";
 import { EventFeed } from "./components/EventFeed";
 import { TradesTable } from "./components/TradesTable";
@@ -15,6 +15,16 @@ import { SettingsPanel } from "./components/SettingsPanel";
 const EMPTY_MARKET: MarketSnapshot = {
   slug: null, seconds_left: null, up_ask: null, dn_ask: null, up_bid: null, dn_bid: null, spread: null,
 };
+
+function SectionHeading({ icon, title, children }: { icon: IconName; title: string; children?: ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 mb-2 px-1">
+      <DynamicIcon name={icon} size={17} strokeWidth={1.75} className="shrink-0" />
+      <h2 className="text-base font-semibold">{title}</h2>
+      {children}
+    </div>
+  );
+}
 
 export default function App() {
   const { connected, status, events, equity } = useSim();
@@ -29,7 +39,6 @@ export default function App() {
 
   const running = !!status?.running;
 
-  // Poll a live market preview for the status bar while idle.
   useEffect(() => {
     if (running) return;
     let alive = true;
@@ -61,8 +70,10 @@ export default function App() {
   const market = running && status ? status.market : preview;
   const state = status?.state ?? "FLAT";
   const kpis = status?.kpis ?? { trades: 0, wins: 0, losses: 0, win_rate: 0, total_pnl: 0, fees_paid: 0, max_drawdown: 0 };
-  const balance = status?.balance ?? config?.start_balance ?? 100;
+  const startBalance = status?.config?.start_balance ?? config?.start_balance ?? 100;
+  const balance = status?.balance ?? startBalance;
   const equityVal = status?.equity ?? balance;
+  const pos = status?.position ?? null;
 
   const onStart = async () => { if (config) await api.start(config); };
   const onStop = async () => { await api.stop(); };
@@ -70,8 +81,8 @@ export default function App() {
   const onDeletePreset = async (id: number) => { await api.deletePreset(id); reloadPresets(); };
 
   return (
-    <div className="min-h-full max-w-[1400px] mx-auto p-4 md:p-6">
-      <header className="flex items-center gap-3 mb-4">
+    <div className="min-h-full w-full max-w-[1760px] mx-auto p-4 md:p-6">
+      <header className="flex items-center gap-3 mb-5">
         <DynamicIcon name="candlestick-chart" size={26} strokeWidth={1.75} className="shrink-0 text-accent" />
         <h1 className="text-xl md:text-2xl font-bold">BTC 5m Paper Simulator</h1>
         <Chip color="warning">
@@ -90,8 +101,8 @@ export default function App() {
         <StatusBar market={market} state={state} running={running} />
         <KpiCards kpis={kpis} balance={balance} equity={equityVal} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-1 lg:row-span-2">
+        <div className="flex flex-col lg:flex-row gap-4 items-start">
+          <aside className="w-full lg:w-[360px] lg:shrink-0">
             {config ? (
               <SettingsPanel
                 config={config}
@@ -106,22 +117,49 @@ export default function App() {
             ) : (
               <div className="text-[var(--muted-foreground)]">Loading settings…</div>
             )}
-          </div>
+          </aside>
 
-          <div className="lg:col-span-2 space-y-4">
-            <div className="rounded-xl border border-[var(--color-default-200)] bg-[var(--color-default-50)] p-3">
-              <div className="flex items-center gap-2 text-sm font-medium mb-1 px-1">
-              <DynamicIcon name="line-chart" size={16} strokeWidth={1.75} className="shrink-0" />
-              Equity curve
+          <main className="flex-1 min-w-0 space-y-5">
+            <PortfolioChart data={equity} startBalance={startBalance} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <section className="lg:col-span-1">
+                <SectionHeading icon="briefcase" title="Position">
+                  {pos ? (
+                    <Chip size="sm" color={pos.side === "UP" ? "success" : "danger"}>
+                      <DynamicIcon name={pos.side === "UP" ? "trending-up" : "trending-down"} size={13} strokeWidth={1.75} className="shrink-0" />
+                      {pos.side}
+                    </Chip>
+                  ) : (
+                    <Chip size="sm" color="default">FLAT</Chip>
+                  )}
+                </SectionHeading>
+                {status ? (
+                  <div className="h-[300px]">
+                    <PositionCard status={status} />
+                  </div>
+                ) : (
+                  <div className="h-[300px]" />
+                )}
+              </section>
+
+              <section className="lg:col-span-2">
+                <SectionHeading icon="radio" title="Live event feed">
+                  <Chip size="sm" color="default">{events.length}</Chip>
+                </SectionHeading>
+                <div className="h-[300px]">
+                  <EventFeed events={events} />
+                </div>
+              </section>
             </div>
-              <EquityChart data={equity} />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {status ? <PositionCard status={status} /> : <div />}
-              <EventFeed events={events} />
-            </div>
-            <TradesTable trades={trades} />
-          </div>
+
+            <section>
+              <SectionHeading icon="history" title="Trade history">
+                <Chip size="sm" color="default">{trades.length}</Chip>
+              </SectionHeading>
+              <TradesTable trades={trades} />
+            </section>
+          </main>
         </div>
 
         <footer className="text-center text-xs text-[var(--muted-foreground)] py-4">

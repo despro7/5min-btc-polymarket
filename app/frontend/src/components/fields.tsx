@@ -1,5 +1,13 @@
-import { Description, Label, NumberField, Switch } from "@heroui/react";
+import { useEffect, useState } from "react";
+import { Description, Label, Switch } from "@heroui/react";
+import { DynamicIcon } from "lucide-react/dynamic";
 
+function round(v: number, decimals = 6): number {
+  const f = 10 ** decimals;
+  return Math.round((v + Number.EPSILON) * f) / f;
+}
+
+/** Bordered controlled number stepper (−  value  +). Built from free components. */
 export function NumField(props: {
   label: string;
   value: number;
@@ -7,28 +15,70 @@ export function NumField(props: {
   minValue?: number;
   maxValue?: number;
   step?: number;
-  formatOptions?: Intl.NumberFormatOptions;
   isDisabled?: boolean;
 }) {
-  const { label, value, onChange, minValue, maxValue, step, formatOptions, isDisabled } = props;
+  const { label, value, onChange, minValue, maxValue, step = 1, isDisabled } = props;
+  const [text, setText] = useState(String(value));
+
+  useEffect(() => {
+    setText(String(value));
+  }, [value]);
+
+  const clamp = (v: number): number => {
+    let out = v;
+    if (minValue !== undefined) out = Math.max(minValue, out);
+    if (maxValue !== undefined) out = Math.min(maxValue, out);
+    return round(out);
+  };
+
+  const commit = (v: number) => onChange(clamp(v));
+  const atMin = minValue !== undefined && value <= minValue;
+  const atMax = maxValue !== undefined && value >= maxValue;
+
+  const btn =
+    "flex items-center justify-center w-9 self-stretch text-[var(--foreground)] transition-colors hover:bg-[var(--color-default-200)] disabled:opacity-40 disabled:cursor-not-allowed";
+
   return (
-    <NumberField
-      className="w-full"
-      value={value}
-      onChange={onChange}
-      minValue={minValue}
-      maxValue={maxValue}
-      step={step}
-      formatOptions={formatOptions}
-      isDisabled={isDisabled}
-    >
-      <Label className="text-xs text-[var(--muted-foreground)]">{label}</Label>
-      <NumberField.Group>
-        <NumberField.DecrementButton />
-        <NumberField.Input />
-        <NumberField.IncrementButton />
-      </NumberField.Group>
-    </NumberField>
+    <div className="w-full">
+      <label className="block text-xs text-[var(--muted-foreground)] mb-1.5">{label}</label>
+      <div
+        className={`flex items-stretch h-9 rounded-lg border border-[var(--color-default-300)] bg-[var(--color-default-100)] overflow-hidden focus-within:border-[var(--color-accent)] ${
+          isDisabled ? "opacity-50" : ""
+        }`}
+      >
+        <button
+          type="button"
+          aria-label="Decrease"
+          disabled={isDisabled || atMin}
+          onClick={() => commit(value - step)}
+          className={`${btn} border-r border-[var(--color-default-300)]`}
+        >
+          <DynamicIcon name="minus" size={15} strokeWidth={2} className="shrink-0" />
+        </button>
+        <input
+          type="text"
+          inputMode="decimal"
+          disabled={isDisabled}
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            const v = parseFloat(e.target.value);
+            if (!isNaN(v)) commit(v);
+          }}
+          onBlur={() => setText(String(value))}
+          className="w-full min-w-0 bg-transparent text-center text-sm font-medium tabular-nums outline-none"
+        />
+        <button
+          type="button"
+          aria-label="Increase"
+          disabled={isDisabled || atMax}
+          onClick={() => commit(value + step)}
+          className={`${btn} border-l border-[var(--color-default-300)]`}
+        >
+          <DynamicIcon name="plus" size={15} strokeWidth={2} className="shrink-0" />
+        </button>
+      </div>
+    </div>
   );
 }
 

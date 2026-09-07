@@ -15,6 +15,14 @@ export const fmtClock = (ms: number): string => {
   return dt.toLocaleTimeString("en-GB", { hour12: false });
 };
 
+export const fmtDateTime = (iso: string): string => {
+  const dt = new Date(iso);
+  if (isNaN(dt.getTime())) return "—";
+  const date = dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const time = dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  return `${date} · ${time}`;
+};
+
 export const fmtSecs = (s: number | null | undefined): string =>
   s === null || s === undefined ? "—" : `${Math.max(0, Math.floor(s))}s`;
 
